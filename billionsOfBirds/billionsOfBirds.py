@@ -15,6 +15,8 @@ import tkinter.messagebox
 #or just accept that I have to change this every time we play...which is actually easy
 playerNames = ["Larry", "Kimi", "Brian", "Mom", "Cleo", "Elenor"]
 
+projectPath = "C:/Users/capud/Documents/git/games/billionsOfBirds"
+
 def prepareImageTk(picLoc, imWidth, imHeight):
     #picLoc = full path to the image
     #resize to imWidth x imHeight while maintaining aspect ratio
@@ -46,7 +48,7 @@ win.geometry(str(windowWidth)+"x"+str(windowHeight))
 #win.geometry("1600x600")
 
 #I decided to add a background for flavor
-otherPath = "C:/Users/capud/Documents/LarryProj/billionsOfBirds/otherPictures"
+otherPath = projectPath + "/suppFiles"
 fileLocBackground = otherPath + "/lush-green-forest-neblzag5t76yolal.jpg"
 #resizing a little wider to make sure it really fills the space
 imageBackground = prepareImageTk(fileLocBackground, windowWidth*1.5, windowHeight*1.5)
@@ -68,8 +70,8 @@ imWidth = floor(widthForPics/numBirds);
 imHeight = floor(windowHeight*2/3);
 
 #Set up the list of bird photos
-#photoDir = "C:/Users/capud/Documents/LarryProj/billionsOfBirds/birdPhotos"
-photoDir = "C:/Users/capud/Documents/LarryProj/billionsOfBirds/kimiBirb"
+#photoDir = projectPath + "/birdPhotos"
+photoDir = projectPath + "/kimiBirb"
 photoList = listdir(photoDir)
 photoIndexOptions = list(range(len(photoList)))
 
