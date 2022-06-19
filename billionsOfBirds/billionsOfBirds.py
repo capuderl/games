@@ -17,6 +17,10 @@ playerNames = ["Larry", "Kimi", "Brian", "Mom", "Cleo", "Elenor"]
 
 projectPath = "C:/Users/capud/Documents/git/games/billionsOfBirds"
 
+#How many points to play to?  
+pointsRemainingInitial = 150
+pointsRemaining = pointsRemainingInitial
+
 def prepareImageTk(picLoc, imWidth, imHeight):
     #picLoc = full path to the image
     #resize to imWidth x imHeight while maintaining aspect ratio
@@ -268,14 +272,31 @@ for iP in range(len(playerNames)):
     
 #Tally/display scores
 def addScores():
+    global pointsRemaining
     for iP in range(len(playerNames)):
-        #print(isChecked[iP].get())
-        if isChecked[iP].get(): #eval("isChecked%s" % playerNames[iP]):
+        #print(playerNames[iP] + ": " + str(isChecked[iP]) + " ...or " + str(isChecked[iP].get()))
+        if isChecked[iP].get(): 
             score[iP] = score[iP] + 1
-            isChecked[iP] = 0
+            isChecked[iP].set(0)
+            pointsRemaining = pointsRemaining - 1
+    if pointsRemaining <= 0:
+        finalScore()
+    scoreButton.config(text="Score Points\nRemaining " + str(pointsRemaining))
+    
+#What to print when the game ends
+def finalScore():
+    global pointsRemaining
+    finalOutput = ""
+    for iP in range(len(playerNames)):
+        finalOutput = finalOutput + playerNames[iP] + ": " + str(score[iP]) + "\n"
+    tkinter.messagebox.askokcancel(title="Final Scores!", message=finalOutput)
+    pointsRemaining = pointsRemainingInitial
+    #Reset the max in case they want to keep playing...reset the counter though
+    #This addScores call is just to reset the "remaining" display.  
+    addScores()
 
 scoreButton = Button(
-    text ="Score Points", 
+    text ="Score Points\nRemaining " + str(pointsRemaining), 
     command = addScores,
     image=pixelVirtual,
     height = buttonHeightPixels, 
