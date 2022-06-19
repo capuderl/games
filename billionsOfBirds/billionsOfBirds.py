@@ -9,6 +9,8 @@ from math import floor, ceil
 import random
 from os import listdir
 import tkinter.messagebox
+from functools import partial
+
 
 #Who is playing?
 #TODO: get this as user input rather than hardcoding it
@@ -18,8 +20,12 @@ playerNames = ["Larry", "Kimi", "Brian", "Mom", "Cleo", "Elenor"]
 projectPath = "C:/Users/capud/Documents/git/games/billionsOfBirds"
 
 #How many points to play to?  
-pointsRemainingInitial = 150
+pointsRemainingInitial = 10 #150
 pointsRemaining = pointsRemainingInitial
+
+######################################## Initializing and odds and ends
+
+
 
 def prepareImageTk(picLoc, imWidth, imHeight):
     #picLoc = full path to the image
@@ -40,10 +46,13 @@ def prepareImageTk(picLoc, imWidth, imHeight):
 
 
 labels = []
+takeHomeButtons = []
+picName = []
 numBirds = 4
 
 # Create an instance of tkinter window
 win = Tk()
+win.title('Billions of Birds')
 
 # Define the geometry of the window
 windowWidth = 1200
@@ -69,15 +78,17 @@ buffer = 60
 widthForPics = windowWidth - (numBirds+1)*buffer
 imWidth = floor(widthForPics/numBirds);
 
-#What fraction of the height should image take up?  Let's give it half for now
-#In my experimenting, the width was the real limiting factor, so this doesn't really matter
-imHeight = floor(windowHeight*2/3);
+#What fraction of the height should image take up?  
+#subtract a little buffer to make sure the button doesn't look weird
+imHeight = floor(windowHeight*2/3) - 50;
 
 #Set up the list of bird photos
 #photoDir = projectPath + "/birdPhotos"
 photoDir = projectPath + "/kimiBirb"
 photoList = listdir(photoDir)
 photoIndexOptions = list(range(len(photoList)))
+#Turn on the names to the birds only when it's Kimi's set that named the birds nicely
+addBirdName = "kimiBirb" in photoDir
 
 #read in the stories
 fStories=open(otherPath + "/stories.txt")
@@ -88,6 +99,72 @@ storyIndexOptions = list(range(len(stories)))
 fAdj=open(otherPath + "/adj.txt")
 adj = fAdj.readlines()
 adjIndexOptions = list(range(len(adj)))
+
+#This is an empty virtual 1x1 pixel
+#This is added to the botton so that height and width are in pixels
+#default is "text units", which I find clunky
+pixelVirtual = PhotoImage(width=1, height=1)
+
+######################################## Take a bird home
+
+def takeBirdHome(iPosition):
+    labelsHome = []
+    
+    #Make a new window with all of that player's birds
+    winHome = Toplevel(win)
+    #TODO: fetch player
+    winHome.title(playerNames[iPosition] + "'s birds")
+    
+    numBirdsHome = 13 #THis is temporary until I set up birds for a player
+    
+    #Height and width of photo depends on size of grid
+    #Base it on size of main window
+    #always have 3 rows
+    numRows = 3
+    homeImageHeight = floor(windowHeight/numRows)
+    #number of columns changes based on number of birds
+    numCol = ceil(numBirdsHome/numRows)
+    homeImageWidth = floor(windowWidth/numCol)
+
+    for i in range(numBirdsHome):
+        imageTk = prepareImageTk(photoDir + "/" + picName[iPosition], homeImageWidth, homeImageHeight)
+        #debug with sand hill crane, it's weird dimensions
+        #imageTk = prepareImageTk(photoDir + "/" + "sandhill crane.jpg", homeImageWidth, homeImageHeight)
+        labelsHome.append(Label(winHome, image=imageTk))
+        labelsHome[i].image = imageTk
+        #position the photo...let them auto do it
+        labelsHome[i].grid(row=i%numRows, column=floor(i/numRows))
+
+    
+
+def addTakeHomeCaption():
+    for iPosition in range(numBirds):
+        #Kimi wants the caption to be at the bottom of the photo, that's what she gets!
+        #Idea is to have it be right below the picture and same width 
+        imPlaceInfo = labels[iPosition].place_info()
+        xPos = int(imPlaceInfo["x"])
+        #upper left corner of image plus image height + some buffer
+        yPos = int(imPlaceInfo["y"]) + labels[iPosition].image.height() + 10
+
+        if len(takeHomeButtons)<numBirds:
+            #Make the button for the first time
+            #I tried lambda for adding arguements to takeBirdHome, it always used iPostion of last one though
+            takeBirdHome_with_arg = partial(takeBirdHome, iPosition)
+            takeHomeButtons.append(
+                Button(
+                    text ="Take Me Home", 
+                    command = takeBirdHome_with_arg,
+                    image=pixelVirtual,
+                    width = imWidth,
+                    compound="c",
+                    bg="#abf7b1"))
+                    
+        #reposition
+        takeHomeButtons[iPosition].place( x=xPos , y=yPos)
+        #rename only if it's kimi's data set
+        if addBirdName:
+            takeHomeButtons[iPosition].config(text="Take Me Home\n" + picName[iPosition].split('.')[0])
+
 
 ######################################## Restting and initilizing images
 
@@ -111,20 +188,23 @@ def resetBirdPics():
             photoIndexOptions = list(range(len(photoList)))
             print("You've run out of photos, so I reset them")
         
-        imageTrk = prepareImageTk(photoDir + "/" + photoList[iImage], imWidth, imHeight)
-        
+        imageTk = prepareImageTk(photoDir + "/" + photoList[iImage], imWidth, imHeight)
+
         if len(labels)<numBirds:
             #This is the first printing
-            labels.append(Label(win, image=imageTrk))
+            labels.append(Label(win, image=imageTk))
+            picName.append(photoList[iImage])
         else:
             #remove the old one
             labels[iPosition].destroy()
+            picName[iPosition] = photoList[iImage]
 
         #position the photo
-        labels[iPosition] = Label(win, image=imageTrk)
-        labels[iPosition].image = imageTrk
+        labels[iPosition] = Label(win, image=imageTk)
+        labels[iPosition].image = imageTk
         xPosition = buffer * (iPosition + 1) + imWidth * iPosition
         labels[iPosition].place(x=xPosition, y=ceil(windowHeight/3))
+    addTakeHomeCaption()
 
 #Print birds for the first time
 resetBirdPics()
@@ -172,12 +252,6 @@ def pullUpAdj():
     #I'm using askokcancel because it doesn't make an annoying beep...I guess that's hard to turn off
     #tkinter.messagebox.showinfo("Story time",  stories[iS])
     tkinter.messagebox.askokcancel(title="This birb is...", message=adj[iS])
-
-
-#This is an empty virtual 1x1 pixel
-#This is added to the botton so that height and width are in pixels
-#default is "text units", which I find clunky
-pixelVirtual = PhotoImage(width=1, height=1)
 
 #A lot of these ratios I picked for aesthetics
 buttonHeightPixels = floor(windowHeight/5.5)
@@ -241,6 +315,10 @@ diceButton = Button(
     bg="white")
 distanceFromEdge = distanceFromEdge - buttonBuffer - buttonWidthPixels
 diceButton.place( x=distanceFromEdge , y=distanceFromTop)
+
+
+        
+        
 
 ######################################## Scoring
 
