@@ -13,8 +13,6 @@ from functools import partial
 
 
 #Who is playing?
-#TODO: get this as user input rather than hardcoding it
-#or just accept that I have to change this every time we play...which is actually easy
 playerNames = ["Larry", "Kimi", "Brian", "Mom", "Cleo", "Elenor"]
 
 projectPath = "C:/Users/capud/Documents/git/games/billionsOfBirds"
@@ -24,7 +22,6 @@ pointsRemainingInitial = 10 #150
 pointsRemaining = pointsRemainingInitial
 
 ######################################## Initializing and odds and ends
-
 
 
 def prepareImageTk(picLoc, imWidth, imHeight):
@@ -40,7 +37,6 @@ def prepareImageTk(picLoc, imWidth, imHeight):
     img = img.resize(newSizeInt, Image.Resampling.LANCZOS)
 
     imgTk = ImageTk.PhotoImage(img)
-
 
     return imgTk
 
@@ -107,35 +103,54 @@ pixelVirtual = PhotoImage(width=1, height=1)
 
 ######################################## Take a bird home
 
-def takeBirdHome(iPosition):
-    labelsHome = []
-    
-    #Make a new window with all of that player's birds
-    winHome = Toplevel(win)
-    #TODO: fetch player
-    winHome.title(playerNames[iPosition] + "'s birds")
-    
-    numBirdsHome = 13 #THis is temporary until I set up birds for a player
-    
-    #Height and width of photo depends on size of grid
-    #Base it on size of main window
-    #always have 3 rows
-    numRows = 3
-    homeImageHeight = floor(windowHeight/numRows)
-    #number of columns changes based on number of birds
-    numCol = ceil(numBirdsHome/numRows)
-    homeImageWidth = floor(windowWidth/numCol)
+#A list for each player
+imagesPlayersTookHome = [[]] * len(playerNames)
 
-    for i in range(numBirdsHome):
-        imageTk = prepareImageTk(photoDir + "/" + picName[iPosition], homeImageWidth, homeImageHeight)
+def takeBirdHome(iPosition):
+
+    #Figure out who is taking it home
+    iPlayer = -1
+    numChecked = 0;
+    for iP in range(len(playerNames)):
+        #print(playerNames[iP] + ": " + str(isChecked[iP]) + " ...or " + str(isChecked[iP].get()))
+        if isChecked[iP].get(): 
+            iPlayer = iP
+            numChecked = numChecked + 1
+    
+    #This only works if EXACTLY one player is checked, they are the ones that take the bird home
+    if numChecked != 1:
+       tkinter.messagebox.showerror("No!", "You checked " + str() + " players, but you need to check exactly 1 for this")
+    else:
+        #Make a new window with all of that player's birds
+        winHome = Toplevel(win)
+        winHome.title(playerNames[iPlayer] + "'s birds")
+        
+        #Add bird they took home
+        #Just save the image name, I was tempted to add the formmated image, but it'll need to be resized later
         #debug with sand hill crane, it's weird dimensions
         #imageTk = prepareImageTk(photoDir + "/" + "sandhill crane.jpg", homeImageWidth, homeImageHeight)
-        labelsHome.append(Label(winHome, image=imageTk))
-        labelsHome[i].image = imageTk
-        #position the photo...let them auto do it
-        labelsHome[i].grid(row=i%numRows, column=floor(i/numRows))
-
+        imagesPlayersTookHome[iPlayer].append(photoDir + "/" + picName[iPosition])
+        
+        numBirdsHome = len(imagesPlayersTookHome[iPlayer])
+        
+        #Place birds taken home on a grid
+        #Height and width of photo depends on size of grid
+        #Base it on size of main window
+        #always have 3 rows
+        numRows = 3
+        homeImageHeight = floor(windowHeight/numRows)
+        #number of columns changes based on number of birds
+        numCol = ceil(numBirdsHome/numRows)
+        homeImageWidth = floor(windowWidth/numCol)
     
+        #populate a grid with all of the birds they took home
+        labelsHome = []
+        for i in range(len(imagesPlayersTookHome[iPlayer])):
+            imageTk = prepareImageTk(imagesPlayersTookHome[iPlayer][i], homeImageWidth, homeImageHeight)
+            labelsHome.append(Label(winHome, image=imageTk))
+            labelsHome[i].image = imageTk
+            #position the photo...let them auto do it
+            labelsHome[i].grid(row=i%numRows, column=floor(i/numRows))    
 
 def addTakeHomeCaption():
     for iPosition in range(numBirds):
