@@ -14,11 +14,12 @@ from functools import partial
 
 #Who is playing?
 playerNames = ["Larry", "Kimi", "Brian", "Mom", "Cleo", "Elenor"]
+#playerNames = ["Larry", "Kimi"]
 
 projectPath = "C:/Users/capud/Documents/git/games/billionsOfBirds"
 
 #How many points to play to?  
-pointsRemainingInitial = 10 #150
+pointsRemainingInitial = 40 #150
 pointsRemaining = pointsRemainingInitial
 
 ######################################## Initializing and odds and ends
@@ -104,7 +105,12 @@ pixelVirtual = PhotoImage(width=1, height=1)
 ######################################## Take a bird home
 
 #A list for each player
-imagesPlayersTookHome = [[]] * len(playerNames)
+# Create an empty list
+imagesPlayersTookHome = []
+# Iterate over a sequence of numbers from 0 to 4
+for i in range(len(playerNames)):
+    # In each iteration, add an empty list to the main list
+    imagesPlayersTookHome.append([])
 
 def takeBirdHome(iPosition):
 
@@ -121,36 +127,13 @@ def takeBirdHome(iPosition):
     if numChecked != 1:
        tkinter.messagebox.showerror("No!", "You checked " + str() + " players, but you need to check exactly 1 for this")
     else:
-        #Make a new window with all of that player's birds
-        winHome = Toplevel(win)
-        winHome.title(playerNames[iPlayer] + "'s birds")
-        
         #Add bird they took home
         #Just save the image name, I was tempted to add the formmated image, but it'll need to be resized later
         #debug with sand hill crane, it's weird dimensions
         #imageTk = prepareImageTk(photoDir + "/" + "sandhill crane.jpg", homeImageWidth, homeImageHeight)
         imagesPlayersTookHome[iPlayer].append(photoDir + "/" + picName[iPosition])
-        
-        numBirdsHome = len(imagesPlayersTookHome[iPlayer])
-        
-        #Place birds taken home on a grid
-        #Height and width of photo depends on size of grid
-        #Base it on size of main window
-        #always have 3 rows
-        numRows = 3
-        homeImageHeight = floor(windowHeight/numRows)
-        #number of columns changes based on number of birds
-        numCol = ceil(numBirdsHome/numRows)
-        homeImageWidth = floor(windowWidth/numCol)
-    
-        #populate a grid with all of the birds they took home
-        labelsHome = []
-        for i in range(len(imagesPlayersTookHome[iPlayer])):
-            imageTk = prepareImageTk(imagesPlayersTookHome[iPlayer][i], homeImageWidth, homeImageHeight)
-            labelsHome.append(Label(winHome, image=imageTk))
-            labelsHome[i].image = imageTk
-            #position the photo...let them auto do it
-            labelsHome[i].grid(row=i%numRows, column=floor(i/numRows))    
+        makeTakeBirdHomeWindow(iPlayer)
+
 
 def addTakeHomeCaption():
     for iPosition in range(numBirds):
@@ -179,6 +162,36 @@ def addTakeHomeCaption():
         #rename only if it's kimi's data set
         if addBirdName:
             takeHomeButtons[iPosition].config(text="Take Me Home\n" + picName[iPosition].split('.')[0])
+
+def makeTakeBirdHomeWindow(iPlayer):
+    numBirdsHome = len(imagesPlayersTookHome[iPlayer])
+
+    #Don't make a window if there are no birds
+    if numBirdsHome > 0:
+        #Make a new window with all of that player's birds
+        winHome = Toplevel(win)
+        winHome.title(playerNames[iPlayer] + "'s birds")    
+        
+        #Place birds taken home on a grid
+        #Height and width of photo depends on size of grid
+        #Base it on size of main window
+        #always have 3 rows
+        numRows = 3
+        homeImageHeight = floor(windowHeight/numRows)
+        #number of columns changes based on number of birds
+        numCol = ceil(numBirdsHome/numRows)
+        homeImageWidth = floor(windowWidth/numCol)
+
+        #populate a grid with all of the birds they took home
+        labelsHome = []
+        for i in range(len(imagesPlayersTookHome[iPlayer])):
+            imageTk = prepareImageTk(imagesPlayersTookHome[iPlayer][i], homeImageWidth, homeImageHeight)
+            labelsHome.append(Label(winHome, image=imageTk))
+            labelsHome[i].image = imageTk
+            #position the photo...let them auto do it
+            labelsHome[i].grid(row=i%numRows, column=floor(i/numRows))
+    else:
+        tkinter.messagebox.askokcancel(title="Derp", message=playerNames[iPlayer]+" has no birds.")
 
 
 ######################################## Restting and initilizing images
@@ -382,6 +395,7 @@ def finalScore():
     finalOutput = ""
     for iP in range(len(playerNames)):
         finalOutput = finalOutput + playerNames[iP] + ": " + str(score[iP]) + "\n"
+        makeTakeBirdHomeWindow(iP)
     tkinter.messagebox.askokcancel(title="Final Scores!", message=finalOutput)
     pointsRemaining = pointsRemainingInitial
     #Reset the max in case they want to keep playing...reset the counter though
