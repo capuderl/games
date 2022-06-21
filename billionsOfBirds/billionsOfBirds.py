@@ -47,6 +47,8 @@ takeHomeButtons = []
 picName = []
 numBirds = 4
 
+whoseTurn = 0
+
 # Create an instance of tkinter window
 win = Tk()
 win.title('Billions of Birds')
@@ -125,7 +127,7 @@ def takeBirdHome(iPosition):
     
     #This only works if EXACTLY one player is checked, they are the ones that take the bird home
     if numChecked != 1:
-       tkinter.messagebox.showerror("No!", "You checked " + str() + " players, but you need to check exactly 1 for this")
+       tkinter.messagebox.showerror("No!", "You checked " + str(numChecked) + " players, but you need to check exactly 1 for this")
     else:
         #Add bird they took home
         #Just save the image name, I was tempted to add the formmated image, but it'll need to be resized later
@@ -133,6 +135,7 @@ def takeBirdHome(iPosition):
         #imageTk = prepareImageTk(photoDir + "/" + "sandhill crane.jpg", homeImageWidth, homeImageHeight)
         imagesPlayersTookHome[iPlayer].append(photoDir + "/" + picName[iPosition])
         makeTakeBirdHomeWindow(iPlayer)
+        isChecked[iPlayer].set(0)
 
 
 def addTakeHomeCaption():
@@ -287,18 +290,8 @@ buttonWidthPixels = floor(windowWidth/12)
 buttonBuffer = floor(buttonWidthPixels/5)
 bottonColor = '#013220'
 buttonFontColor = 'white'
-B = Button(
-    text ="Reset Birds", 
-    command = resetBirdPics,
-    image=pixelVirtual,
-    height = buttonHeightPixels, 
-    width = buttonWidthPixels,
-    compound="c",
-    bg=bottonColor,
-    fg=buttonFontColor)
 distanceFromEdge = windowWidth-2*buttonWidthPixels
 distanceFromTop = floor(buttonHeightPixels/5)
-B.place( x=distanceFromEdge , y=distanceFromTop)
 
 B2 = Button(
     text ="Pull up Adjective", 
@@ -309,7 +302,7 @@ B2 = Button(
     compound="c",
     bg=bottonColor,
     fg=buttonFontColor)
-distanceFromEdge = distanceFromEdge - buttonBuffer - buttonWidthPixels
+#distanceFromEdge = distanceFromEdge - buttonBuffer - buttonWidthPixels
 B2.place( x=distanceFromEdge , y=distanceFromTop)
 
 B3 = Button(
@@ -327,11 +320,18 @@ B3.place( x=distanceFromEdge , y=distanceFromTop)
 diceOptions = ["Story", "Adjective", "Take a birb home"]
 colorDice = ["purple", "blue", "yellow"]
 def rollDice():
+    global whoseTurn
     iDice = random.randint(0, len(diceOptions)-1)
-    diceButton.config(text=diceOptions[iDice])
+    #diceButton.config(text=diceOptions[iDice])
+    diceButton.config(text="\n" + playerNames[whoseTurn] + "'s roll:\n\n" + diceOptions[iDice])
+    diceButton.config(anchor="n")
     diceButton.config(bg=colorDice[iDice])
-    #iColor = random.randint(0, len(rainbow)-1)
-    #diceButton.config(bg=rainbow[iColor])
+    #Keep track of whose turn it is
+    if whoseTurn < len(playerNames)-1:
+        whoseTurn = whoseTurn + 1
+    else:
+        whoseTurn = 0
+
 
 diceButton = Button(
     text ="Action:\nRoll Dice", 
@@ -344,7 +344,17 @@ diceButton = Button(
 distanceFromEdge = distanceFromEdge - buttonBuffer - buttonWidthPixels
 diceButton.place( x=distanceFromEdge , y=distanceFromTop)
 
-
+B = Button(
+    text ="Reset Birds", 
+    command = resetBirdPics,
+    image=pixelVirtual,
+    height = buttonHeightPixels, 
+    width = buttonWidthPixels,
+    compound="c",
+    bg=bottonColor,
+    fg=buttonFontColor)
+distanceFromEdge = distanceFromEdge - buttonBuffer - buttonWidthPixels
+B.place( x=distanceFromEdge , y=distanceFromTop)
         
         
 
