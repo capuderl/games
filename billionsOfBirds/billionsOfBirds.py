@@ -7,14 +7,20 @@ from tkinter import *
 from PIL import ImageTk, Image
 from math import floor, ceil
 import random
+from random import choices
 from os import listdir
 import tkinter.messagebox
 from functools import partial
 
 
 #Who is playing?
-playerNames = ["Larry", "Kimi", "Brian", "Mom", "Cleo", "Elenor"]
+#playerNames = ["Larry", "Kimi", "Brian", "Mom", "Cleo", "Elenor"]
 #playerNames = ["Larry", "Kimi"]
+playerNames = ["Larry", "Kimi", "Brian", "Mom"]
+
+#If this is true, the game will distrubute die roll probabilities that I think is "funnest"
+#If it's false, it'll give equal weight to all 3
+fancyProbMode = True
 
 projectPath = "C:/Users/capud/Documents/git/games/billionsOfBirds"
 
@@ -203,7 +209,7 @@ def resetBirdPics():
     #populate bird pictures
     #loop over the picture in eac location
     
-    global photoIndexOptions
+    global photoIndexOptions, probHome
     for iPosition in range(numBirds):
     
         #Getting a random photo, but I never want to repeat
@@ -236,6 +242,7 @@ def resetBirdPics():
         xPosition = buffer * (iPosition + 1) + imWidth * iPosition
         labels[iPosition].place(x=xPosition, y=ceil(windowHeight/3))
     addTakeHomeCaption()
+    probHome = 0
 
 #Print birds for the first time
 resetBirdPics()
@@ -319,19 +326,57 @@ B3.place( x=distanceFromEdge , y=distanceFromTop)
 
 diceOptions = ["Story", "Adjective", "Take a birb home"]
 colorDice = ["purple", "blue", "yellow"]
+iDice = -1
 def rollDice():
-    global whoseTurn
-    iDice = random.randint(0, len(diceOptions)-1)
-    #diceButton.config(text=diceOptions[iDice])
-    diceButton.config(text="\n" + playerNames[whoseTurn] + "'s roll:\n\n" + diceOptions[iDice])
-    diceButton.config(anchor="n")
-    diceButton.config(bg=colorDice[iDice])
-    #Keep track of whose turn it is
-    if whoseTurn < len(playerNames)-1:
-        whoseTurn = whoseTurn + 1
-    else:
-        whoseTurn = 0
+    global whoseTurn, probHome, iDice
+    #We want to make sure the birds are reset BEFORE the roll because it affects the prob of the roll
+    #Let the user do it manually if they want
+    #iDice represents the last roll.  I'm using a magic number here, there's an assertion elsewhere that should catch if things change
+    continueRolling = True
+    if iDice==2 and probHome > 0:
+        res=tkinter.messagebox.askquestion('Hey Buddy', 'Are you sure you want to reroll before resetting the birds?')
+        if res == 'no' :
+            continueRolling = False
 
+    if continueRolling:
+        probHome, pRoll = getDiceProbs(probHome, diceOptions)
+        #see description of fancyProbMode at the top of the code
+        if fancyProbMode:
+            iDiceList = choices(range(len(diceOptions)), pRoll)
+            iDice = iDiceList[0]
+        else:
+            iDice = random.randint(0, len(diceOptions)-1)
+        diceButton.config(text="\n" + playerNames[whoseTurn] + "'s roll:\n\n" + diceOptions[iDice])
+        diceButton.config(anchor="n")
+        diceButton.config(bg=colorDice[iDice])
+        #Keep track of whose turn it is
+        if whoseTurn < len(playerNames)-1:
+            whoseTurn = whoseTurn + 1
+        else:
+            whoseTurn = 0
+
+def getDiceProbs(probHome, diceOptions):
+    #First itteration gave equal weight to each die roll
+    #But resetting twice in a row feels bad
+    #Also the sotries are more fun than the adj
+    #So have the p(Home) grow.  Give a story a higher weight than adj
+    assert len(diceOptions)==3, "Sorry, I use magic numbers here and you'll need to adjust for that"
+    iStory = 0
+    iAdj = 1
+    iHome = 2
+    pRoll=len(diceOptions)*[0]
+    pRoll[iHome] = probHome
+    #Story should be a tiny bit more likely than adjective because it's more fun
+    pRoll[iStory] = (1 - probHome) * 0.6
+    pRoll[iAdj] = (1 - probHome) * 0.4
+    #prob of taking a bird home grows every roll
+    if probHome < 0.45:
+        probHome = probHome + 0.15
+    else:
+        #we've been with these birds long enough, grow faster!
+        probHome = probHome + 0.25
+    return probHome, pRoll
+    
 
 diceButton = Button(
     text ="Action:\nRoll Dice", 
